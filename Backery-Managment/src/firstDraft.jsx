@@ -1,63 +1,45 @@
 // src/App.jsx
 
-import { useMemo, useState } from 'react'
-import heroImg from './assets/hero.png'
+import { useState } from 'react'
+// import heroImg from './assets/hero.png'
 import './App.css'
 
 const starterProducts = [
   {
     id: 1,
-    name: 'Classic Chip',
-    description: 'Our original brown-butter chocolate chip, crisp edges and a soft center.',
-    price: 4.5,
-    category: 'Classic Cookies',
-    image: heroImg,
+    name: 'Blueberry Croissant',
+    description: 'Flaky butter croissant filled with sweet blueberry filling.',
+    price: 7.5,
+    category: 'Pastries',
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS3qobHNrlUiQBp0LkDxTHH5cVyHTWfO_8GqrIlb_bSa3aYMXU2fc8XvpYQ&s=10",
     available: true,
   },
   {
     id: 2,
-    name: 'Double Sugar',
-    description: 'Vanilla bean sugar cookie rolled in raw sugar for extra crunch.',
-    price: 4,
-    category: 'Classic Cookies',
-    image: heroImg,
+    name: 'Chocolate Cake',
+    description: 'Rich chocolate cake finished with chocolate buttercream.',
+    price: 42,
+    category: 'Cakes',
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbSTB_I-dhyT_QxiFK16h5iU-7DHQqitqDV2SYYeDmGA&s=10",
     available: true,
   },
   {
     id: 3,
-    name: 'Oreo Stuffed',
-    description: 'Chocolate cookie dough wrapped around a whole Oreo and cream filling.',
-    price: 6,
-    category: 'Stuffed Cookies',
-    image: heroImg,
+    name: 'Vanilla Berry Cake',
+    description: 'Vanilla cake layered with fresh berries and cream.',
+    price: 38,
+    category: 'Cakes',
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ15r9XGQVfmo39gN2JddjrSdCdTILmMwpArBK2COhX3g&s=10",
     available: true,
   },
   {
     id: 4,
-    name: 'Birthday Stuffed',
-    description: 'Funfetti dough stuffed with vanilla frosting and rainbow sprinkles.',
+    name: 'Cinnamon Roll',
+    description: 'Soft cinnamon roll finished with vanilla glaze.',
     price: 6,
-    category: 'Stuffed Cookies',
-    image: heroImg,
+    category: 'Pastries',
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9vRUBQYiLdNDMOm313IC5Vq29dCUsUAUlU8D-BMjWIQ&s=10",
     available: false,
-  },
-  {
-    id: 5,
-    name: "S'mores Loaded",
-    description: 'Graham-studded dough loaded with chocolate chunks and toasted marshmallow.',
-    price: 6.5,
-    category: 'Loaded Cookies',
-    image: heroImg,
-    available: true,
-  },
-  {
-    id: 6,
-    name: 'Salted Caramel Loaded',
-    description: 'Brown sugar dough loaded with caramel bits and flaky sea salt.',
-    price: 6.5,
-    category: 'Loaded Cookies',
-    image: heroImg,
-    available: true,
   },
 ]
 
@@ -66,13 +48,13 @@ const starterReviews = [
     id: 1,
     name: 'Jordan M.',
     rating: 5,
-    text: 'Everything tasted fresh and the cookies disappeared immediately.',
+    text: 'Everything tasted fresh and the pastries disappeared immediately.',
   },
   {
     id: 2,
     name: 'Alex R.',
     rating: 5,
-    text: 'The stuffed cookies looked incredible and tasted even better.',
+    text: 'The cake looked incredible and tasted even better.',
   },
   {
     id: 3,
@@ -81,109 +63,6 @@ const starterReviews = [
     text: 'Beautiful presentation, great flavors, and easy pickup.',
   },
 ]
-
-const cookieBases = [
-  {
-    id: 'chocolate-chip',
-    label: 'Chocolate Chip',
-    className: 'base-chocolate-chip',
-    swatch: '#d9a76c',
-  },
-  {
-    id: 'oreo',
-    label: 'Oreo',
-    className: 'base-oreo',
-    swatch: '#4b2d24',
-  },
-  {
-    id: 'vanilla',
-    label: 'Vanilla',
-    className: 'base-vanilla',
-    swatch: '#f4eddf',
-  },
-  {
-    id: 'sugar',
-    label: 'Sugar Cookie',
-    className: 'base-sugar',
-    swatch: '#e9deca',
-  },
-]
-
-// Hand-placed positions per topping so every combination scatters
-// naturally across the same cookie without ever overlapping perfectly.
-const mixIns = [
-  {
-    id: 'mms',
-    label: "M&M's",
-    price: 0.75,
-    colors: ['#d0392b', '#f2b632', '#3f7d4f', '#2f6fb0', '#e07a2c'],
-    shape: 'dot',
-    positions: [
-      [22, 28], [68, 20], [40, 45], [78, 55], [15, 62], [55, 72], [30, 80],
-    ],
-  },
-  {
-    id: 'reeses',
-    label: "Reese's Pieces",
-    price: 0.75,
-    colors: ['#e8952f', '#f4c14a'],
-    shape: 'dot',
-    positions: [
-      [30, 22], [60, 30], [20, 48], [72, 42], [45, 62], [65, 75], [18, 78],
-    ],
-  },
-  {
-    id: 'blueberries',
-    label: 'Blueberries',
-    price: 0.9,
-    colors: ['#3a4a8a', '#4c5fae'],
-    shape: 'dot',
-    positions: [
-      [25, 35], [55, 25], [70, 50], [38, 68], [60, 78], [18, 55],
-    ],
-  },
-  {
-    id: 'chunks',
-    label: 'Chocolate Chunks',
-    price: 0.6,
-    colors: ['#4b2d24', '#3d2b24'],
-    shape: 'chunk',
-    positions: [
-      [24, 24], [66, 26], [42, 40], [20, 66], [72, 62], [48, 78],
-    ],
-  },
-  {
-    id: 'sprinkles',
-    label: 'Sprinkles',
-    price: 0.5,
-    colors: ['#92cfe8', '#d0392b', '#f2b632', '#fffdf8'],
-    shape: 'sprinkle',
-    positions: [
-      [20, 30, 20], [35, 20, -30], [55, 24, 45], [72, 32, -10],
-      [28, 55, 60], [48, 62, -50], [66, 68, 15], [80, 48, -25],
-      [15, 75, 40], [60, 80, -15],
-    ],
-  },
-  {
-    id: 'caramel',
-    label: 'Caramel Bits',
-    price: 0.6,
-    colors: ['#c9862f', '#b5721f'],
-    shape: 'chunk',
-    positions: [
-      [30, 30], [62, 22], [75, 58], [22, 60], [50, 72],
-    ],
-  },
-]
-
-const drizzles = [
-  { id: 'none', label: 'None', price: 0, color: null },
-  { id: 'chocolate', label: 'Chocolate', price: 0.75, color: '#4b2d24' },
-  { id: 'caramel', label: 'Caramel', price: 0.75, color: '#c9862f' },
-  { id: 'white', label: 'White', price: 0.75, color: '#fffdf8' },
-]
-
-const basePrice = 5
 
 function ProductCard({ product }) {
   return (
@@ -266,228 +145,6 @@ function CookieMarquee() {
   )
 }
 
-function CookiePreview({ base, activeMixIns, drizzle }) {
-  const drizzleStyle = drizzle.color
-    ? { '--drizzle-color': drizzle.color }
-    : undefined
-
-  return (
-    <div className="cookie-preview-frame">
-      <div className={`cookie-preview ${base.className}`}>
-        {activeMixIns.map((mixIn) =>
-          mixIn.positions.map(([top, left, rotate], index) => {
-            const color = mixIn.colors[index % mixIn.colors.length]
-
-            if (mixIn.shape === 'sprinkle') {
-              return (
-                <span
-                  key={`${mixIn.id}-${index}`}
-                  className="topping-dot topping-sprinkle"
-                  style={{
-                    top: `${top}%`,
-                    left: `${left}%`,
-                    background: color,
-                    transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
-                  }}
-                />
-              )
-            }
-
-            if (mixIn.shape === 'chunk') {
-              return (
-                <span
-                  key={`${mixIn.id}-${index}`}
-                  className="topping-dot topping-chunk"
-                  style={{
-                    top: `${top}%`,
-                    left: `${left}%`,
-                    background: color,
-                  }}
-                />
-              )
-            }
-
-            return (
-              <span
-                key={`${mixIn.id}-${index}`}
-                className="topping-dot topping-round"
-                style={{
-                  top: `${top}%`,
-                  left: `${left}%`,
-                  background: color,
-                }}
-              />
-            )
-          }),
-        )}
-
-        {drizzle.color && (
-          <span className="drizzle-overlay" style={drizzleStyle} />
-        )}
-      </div>
-    </div>
-  )
-}
-
-function CookieBuilder() {
-  const [baseId, setBaseId] = useState(cookieBases[0].id)
-  const [selectedMixIns, setSelectedMixIns] = useState(['mms'])
-  const [drizzleId, setDrizzleId] = useState('none')
-
-  const base = cookieBases.find((option) => option.id === baseId)
-  const drizzle = drizzles.find((option) => option.id === drizzleId)
-  const activeMixIns = mixIns.filter((mixIn) =>
-    selectedMixIns.includes(mixIn.id),
-  )
-
-  const total = useMemo(() => {
-    const mixInTotal = activeMixIns.reduce(
-      (sum, mixIn) => sum + mixIn.price,
-      0,
-    )
-    return basePrice + mixInTotal + drizzle.price
-  }, [activeMixIns, drizzle])
-
-  const toggleMixIn = (id) => {
-    setSelectedMixIns((current) =>
-      current.includes(id)
-        ? current.filter((mixInId) => mixInId !== id)
-        : [...current, id],
-    )
-  }
-
-  return (
-    <section className="builder-section" id="build">
-      <div className="section-heading">
-        <div>
-          <span className="eyebrow">MAKE IT YOURS</span>
-
-          <h2>
-            Build your own
-            <span>cookie.</span>
-          </h2>
-        </div>
-
-        <p>
-          One cookie, endless combinations. Pick a base, load it up,
-          finish with a drizzle.
-        </p>
-      </div>
-
-      <div className="builder-layout">
-        <div className="builder-preview">
-          <CookiePreview
-            base={base}
-            activeMixIns={activeMixIns}
-            drizzle={drizzle}
-          />
-
-          <div className="builder-summary">
-            <span className="builder-summary-label">Your cookie</span>
-            <p className="builder-summary-name">
-              {base.label}
-              {activeMixIns.length > 0
-                ? ` + ${activeMixIns.map((m) => m.label).join(', ')}`
-                : ''}
-              {drizzle.id !== 'none' ? ` + ${drizzle.label} Drizzle` : ''}
-            </p>
-
-            <div className="builder-summary-footer">
-              <strong>${total.toFixed(2)}</strong>
-              <button type="button">Add to cart</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="builder-controls">
-          <div className="builder-step">
-            <span className="builder-step-title">
-              <em>Step 1</em> Choose your base
-            </span>
-
-            <div className="builder-options">
-              {cookieBases.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  className={
-                    option.id === baseId
-                      ? 'base-option active'
-                      : 'base-option'
-                  }
-                  onClick={() => setBaseId(option.id)}
-                >
-                  <span
-                    className="option-swatch"
-                    style={{ background: option.swatch }}
-                  />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="builder-step">
-            <span className="builder-step-title">
-              <em>Step 2</em> Add your mix-ins
-            </span>
-
-            <div className="builder-options">
-              {mixIns.map((mixIn) => (
-                <button
-                  key={mixIn.id}
-                  type="button"
-                  className={
-                    selectedMixIns.includes(mixIn.id)
-                      ? 'mixin-option active'
-                      : 'mixin-option'
-                  }
-                  onClick={() => toggleMixIn(mixIn.id)}
-                >
-                  <span
-                    className="option-swatch"
-                    style={{ background: mixIn.colors[0] }}
-                  />
-                  {mixIn.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="builder-step">
-            <span className="builder-step-title">
-              <em>Step 3</em> Finish with a drizzle
-            </span>
-
-            <div className="builder-options">
-              {drizzles.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  className={
-                    option.id === drizzleId
-                      ? 'drizzle-option active'
-                      : 'drizzle-option'
-                  }
-                  onClick={() => setDrizzleId(option.id)}
-                >
-                  {option.color && (
-                    <span
-                      className="option-swatch"
-                      style={{ background: option.color }}
-                    />
-                  )}
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function App() {
   const [products, setProducts] = useState(starterProducts)
   const [activeCategory, setActiveCategory] = useState('All')
@@ -543,7 +200,6 @@ function App() {
         <nav className="navigation" aria-label="Main navigation">
           <a href="#home">Home</a>
           <a href="#menu">Menu</a>
-          <a href="#build">Build Your Own</a>
           <a href="#drops">Drops</a>
           <a href="#about">About</a>
           <a href="#reviews">Reviews</a>
@@ -580,8 +236,8 @@ function App() {
             </h1>
 
             <p>
-              Seasonal cookies made in small batches with a little
-              nostalgia and a lot of butter.
+              Seasonal pastries, cakes, and desserts made in small
+              batches with a little nostalgia and a lot of butter.
             </p>
 
             <div className="hero-actions">
@@ -589,8 +245,8 @@ function App() {
                 Explore the menu
               </a>
 
-              <a href="#build" className="secondary-button">
-                Build your own
+              <a href="#drops" className="secondary-button">
+                Get early access
               </a>
             </div>
 
@@ -610,8 +266,8 @@ function App() {
           <div className="hero-visual">
             <div className="hero-image-frame">
               <img
-                src={heroImg}
-                alt="Selection of freshly baked cookies"
+                src={"https://cdn1.harryanddavid.com/wcsstore/HarryAndDavid/images/catalog/18_7609_30RA_09ex.jpg"}
+                alt="Selection of freshly baked pastries"
                 className="hero-image"
               />
 
@@ -626,7 +282,7 @@ function App() {
               <span>01</span>
 
               <p>
-                Hand-finished cookies made for slow mornings and
+                Hand-finished pastries made for slow mornings and
                 special occasions.
               </p>
             </div>
@@ -647,7 +303,7 @@ function App() {
             </div>
 
             <p>
-              Small-batch cookies made for this week's menu.
+              Small-batch treats made for this week's menu.
               Quantities are limited.
             </p>
           </div>
@@ -682,13 +338,11 @@ function App() {
         <section className="stripe-break">
           <div className="stripe-copy">
             <span>COOKIES</span>
-            <span>CHUNKS</span>
-            <span>CHIPS</span>
+            <span>PASTRIES</span>
+            <span>CAKES</span>
             <span>GOOD DAYS</span>
           </div>
         </section>
-
-        <CookieBuilder />
 
         <section className="early-access" id="drops">
           <div className="early-access-copy">
@@ -763,7 +417,7 @@ function App() {
 
             <p>
               Made thoughtfully, shared generously. Our menu
-              changes with the seasons and each cookie is prepared
+              changes with the seasons and each bake is prepared
               in small batches for better flavor, texture, and
               freshness.
             </p>
