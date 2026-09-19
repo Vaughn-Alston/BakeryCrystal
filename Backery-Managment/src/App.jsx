@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import heroImg from './assets/hero.png'
 import logoImg from './assets/logo.png'
+import { getCurrentUserProfile } from './features/auth/profile.js'
+import { supabase } from './lib/supabase.js'
 import './App.css'
 
 /* ------------------------------------------------------------------ */
@@ -12,6 +14,14 @@ import './App.css'
 const LOGO_SRC = logoImg
 const INSTAGRAM_URL = 'https://instagram.com/cristissweets'
 const TIKTOK_URL = 'https://tiktok.com/@cristissweets'
+
+// Temporary local owner login. Remove this block after Supabase Auth is ready.
+const TEMP_OWNER_ACCOUNT = {
+  email: 'owner@cristissweets.com',
+  password: 'bakery-owner-123',
+}
+
+const PRODUCTS_STORAGE_KEY = 'cristis-products'
 
 const starterProducts = [
   {
@@ -280,11 +290,16 @@ function StickyJoinBar({ joined, onSubmit, dismissed, onDismiss }) {
   )
 }
 
-function ProductCard({ product, onView, onAddToCart }) {
+function ProductCard({ product, onView, onAddToCart, developerMode, onEdit }) {
   return (
     <article className="product-card">
       <div className="product-image-wrapper">
         <img src={product.image} alt={product.name} className="product-image" />
+        {developerMode && (
+          <button type="button" className="developer-edit-button" onClick={() => onEdit(product)}>
+            Edit item
+          </button>
+        )}
         <div className="cookie-stamp">
           <img src={LOGO_SRC} alt="" />
         </div>
@@ -321,6 +336,82 @@ function ProductCard({ product, onView, onAddToCart }) {
         </div>
       </div>
     </article>
+  )
+}
+
+function ProductEditorModal({ product, onClose, onSave }) {
+  const [form, setForm] = useState({
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    image: product.image,
+  })
+
+  const updateField = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    onSave({
+      ...product,
+      ...form,
+      price: Number(form.price),
+    })
+  }
+
+  return (
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="edit-product-title">
+      <div className="modal-card product-editor-card">
+        <button type="button" className="modal-close" onClick={onClose} aria-label="Close editor">×</button>
+        <span className="eyebrow">DEVELOPER MODE</span>
+        <h3 id="edit-product-title">Edit {product.name}</h3>
+        <form className="product-editor-form" onSubmit={handleSubmit}>
+          <label htmlFor="edit-product-name">Name</label>
+          <input id="edit-product-name" value={form.name} onChange={(event) => updateField('name', event.target.value)} required />
+          <label htmlFor="edit-product-description">Description</label>
+          <textarea id="edit-product-description" value={form.description} onChange={(event) => updateField('description', event.target.value)} required />
+          <label htmlFor="edit-product-price">Price</label>
+          <input id="edit-product-price" type="number" min="0" step="0.01" value={form.price} onChange={(event) => updateField('price', event.target.value)} required />
+          <label htmlFor="edit-product-image">Image URL</label>
+          <input id="edit-product-image" type="url" value={form.image} onChange={(event) => updateField('image', event.target.value)} required />
+          <div className="product-editor-actions">
+            <button type="button" className="secondary-button" onClick={onClose}>Cancel</button>
+            <button type="submit" className="primary-button">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function Toast({ notification, onClose }) {
+  useEffect(() => {
+    if (!notification) return undefined
+    const timer = setTimeout(onClose, 3600)
+    return () => clearTimeout(timer)
+  }, [notification, onClose])
+
+  if (!notification) return null
+
+  return (
+    <div className={`toast toast-${notification.type}`} role="status">
+      <strong>{notification.title}</strong>
+      <span>{notification.message}</span>
+      <button type="button" onClick={onClose} aria-label="Dismiss notification">×</button>
+    </div>
+  )
+}
+
+function DeveloperBar({ onDashboard, onExit }) {
+  return (
+    <div className="developer-bar">
+      <span><strong>Developer mode</strong> Owner editing is enabled</span>
+      <div>
+        <button type="button" onClick={onDashboard}>Dashboard</button>
+        <button type="button" onClick={onExit}>Exit mode</button>
+      </div>
+    </div>
   )
 }
 
@@ -795,27 +886,185 @@ function FaqPage({ onBack }) {
   )
 }
 
+function SignInModal({ onClose, onSignedIn, onFeedback }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setError('')
+    setSubmitting(true)
+
+    if (email.trim().toLowerCase() === TEMP_OWNER_ACCOUNT.email && password === TEMP_OWNER_ACCOUNT.password) {
+      onSignedIn(
+        { id: 'temporary-owner', email: TEMP_OWNER_ACCOUNT.email },
+        { role: 'owner' },
+      )
+      onFeedback({ type: 'success', title: 'Sign in successful', message: 'Owner developer mode is ready.' })
+      setSubmitting(false)
+      return
+    }
+
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    })
+
+    if (signInError) {
+      setError(signInError.message)
+      onFeedback({ type: 'error', title: 'Sign in failed', message: signInError.message })
+      setSubmitting(false)
+      return
+    }
+
+    try {
+      const profile = await getCurrentUserProfile()
+      onSignedIn(data.user, profile)
+    } catch (profileError) {
+      setError(profileError.message || 'Unable to load your account profile.')
+      onFeedback({ type: 'error', title: 'Sign in failed', message: profileError.message || 'Unable to load your account profile.' })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="sign-in-title">
+      <div className="modal-card auth-card">
+        <button type="button" className="modal-close" onClick={onClose} aria-label="Close sign in">×</button>
+        <BrandIcon size={64} className="modal-icon" />
+        <span className="eyebrow">WELCOME BACK</span>
+        <h3 id="sign-in-title">Sign in to Cristi's Sweets.</h3>
+        <p>Customers return to the bakery. Owners go straight to management.</p>
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label htmlFor="sign-in-email">Email</label>
+          <input id="sign-in-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <label htmlFor="sign-in-password">Password</label>
+          <input id="sign-in-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <button type="submit" className="primary-button" disabled={submitting}>
+            {submitting ? 'Signing in...' : 'Sign in'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function ManagementDashboard({ user, onSignOut, onStorefront }) {
+  return (
+    <main className="management-page">
+      <div className="management-header">
+        <div>
+          <span className="eyebrow">OWNER WORKSPACE</span>
+          <h1>Bakery management.</h1>
+          <p>Welcome back, {user.email}.</p>
+        </div>
+        <div className="management-actions">
+          <button type="button" className="secondary-button" onClick={onStorefront}>Open developer mode</button>
+          <button type="button" className="primary-button" onClick={onSignOut}>Sign out</button>
+        </div>
+      </div>
+      <div className="management-grid">
+        <section className="management-panel"><span className="eyebrow">TODAY</span><strong>12</strong><p>Open orders</p></section>
+        <section className="management-panel"><span className="eyebrow">THIS WEEK</span><strong>$1,248</strong><p>Sales to date</p></section>
+        <section className="management-panel"><span className="eyebrow">MENU</span><strong>6</strong><p>Active treats</p></section>
+      </div>
+      <section className="management-panel management-placeholder">
+        <span className="eyebrow">MANAGEMENT TOOLS</span>
+        <h2>Your bakery, at a glance.</h2>
+        <p>Order tracking, menu updates, and pickup planning will live here.</p>
+      </section>
+    </main>
+  )
+}
+
 /* --------------------------------- app --------------------------------- */
 
 function App() {
-  const [products] = useState(starterProducts)
+  const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [showSignIn, setShowSignIn] = useState(false)
+  const [products, setProducts] = useState(() => {
+    const savedProducts = window.localStorage.getItem(PRODUCTS_STORAGE_KEY)
+    if (!savedProducts) return starterProducts
+
+    try {
+      return JSON.parse(savedProducts)
+    } catch {
+      return starterProducts
+    }
+  })
   const [activeCategory, setActiveCategory] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const [page, setPage] = useState('home') // 'home' | 'product' | 'faq'
+  const [page, setPage] = useState('home') // 'home' | 'product' | 'faq' | 'management'
   const [selectedProductId, setSelectedProductId] = useState(null)
 
   const [cart, setCart] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
 
-  const [joined, setJoined] = useState(false)
+  const [joined, setJoined] = useState(() => Boolean(window.localStorage.getItem('cristis-joined')))
   const [showModal, setShowModal] = useState(false)
   const [stickyDismissed, setStickyDismissed] = useState(false)
+  const [developerMode, setDeveloperMode] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+  const [notification, setNotification] = useState(null)
+
+  useEffect(() => {
+    let mounted = true
+
+    const loadSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (!mounted) return
+      setUser(data.session?.user ?? null)
+      if (data.session?.user) {
+        setProfile(await getCurrentUserProfile())
+      }
+      setAuthLoading(false)
+    }
+
+    loadSession()
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setProfile(null)
+        setPage('home')
+      } else if (session?.user) {
+        setUser(session.user)
+      }
+    })
+
+    return () => {
+      mounted = false
+      listener.subscription.unsubscribe()
+    }
+  }, [])
+
+  const handleSignedIn = (signedInUser, signedInProfile) => {
+    setUser(signedInUser)
+    setProfile(signedInProfile)
+    setShowSignIn(false)
+    setDeveloperMode(signedInProfile?.role === 'owner')
+    setPage(signedInProfile?.role === 'owner' ? 'management' : 'home')
+  }
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setProfile(null)
+    setPage('home')
+    setDeveloperMode(false)
+    setNotification({ type: 'success', title: 'Signed out', message: 'You have been signed out successfully.' })
+  }
 
   useEffect(() => {
     const seen = window.localStorage.getItem('cristis-modal-seen')
     const alreadyJoined = window.localStorage.getItem('cristis-joined')
-    if (alreadyJoined) setJoined(true)
     if (!seen && !alreadyJoined) {
       const timer = setTimeout(() => setShowModal(true), 600)
       return () => clearTimeout(timer)
@@ -834,7 +1083,7 @@ function App() {
     window.localStorage.setItem('cristis-joined', 'true')
   }
 
-  const categories = ['All', ...new Set(starterProducts.map((product) => product.category))]
+  const categories = ['All', ...new Set(products.map((product) => product.category))]
 
   const visibleProducts = products.filter((product) => {
     const matchesCategory = activeCategory === 'All' || product.category === activeCategory
@@ -876,12 +1125,53 @@ function App() {
     setCart((current) => current.filter((item) => item.cartId !== cartId))
   }
 
+  const openDeveloperMode = () => {
+    setDeveloperMode(true)
+    goHome()
+  }
+
+  const saveProduct = (updatedProduct) => {
+    setProducts((current) => {
+      const nextProducts = current.map((product) => (
+        product.id === updatedProduct.id ? updatedProduct : product
+      ))
+      window.localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(nextProducts))
+      return nextProducts
+    })
+    setEditingProduct(null)
+    setNotification({ type: 'success', title: 'Changes saved', message: `${updatedProduct.name} was updated across the storefront.` })
+  }
+
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.qty, 0)
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0)
 
+  if (authLoading) {
+    return <div className="auth-loading">Loading Cristi's Sweets...</div>
+  }
+
+  if (page === 'management' && profile?.role === 'owner' && user) {
+    return (
+      <>
+        {developerMode && <DeveloperBar onDashboard={() => setPage('management')} onExit={() => { setDeveloperMode(false); goHome() }} />}
+        <Toast notification={notification} onClose={() => setNotification(null)} />
+        <ManagementDashboard user={user} onSignOut={handleSignOut} onStorefront={openDeveloperMode} />
+      </>
+    )
+  }
+
   return (
     <div className="site">
+      {developerMode && <DeveloperBar onDashboard={() => setPage('management')} onExit={() => setDeveloperMode(false)} />}
       {showModal && <EmailCaptureModal onClose={closeModal} onSubmit={handleJoin} />}
+      {showSignIn && <SignInModal onClose={() => setShowSignIn(false)} onSignedIn={handleSignedIn} onFeedback={setNotification} />}
+      <Toast notification={notification} onClose={() => setNotification(null)} />
+      {editingProduct && (
+        <ProductEditorModal
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSave={saveProduct}
+        />
+      )}
 
       <StickyJoinBar
         joined={joined}
@@ -912,6 +1202,11 @@ function App() {
         </nav>
 
         <div className="header-actions">
+          {user ? (
+            <button type="button" className="sign-in-button" onClick={handleSignOut}>Sign out</button>
+          ) : (
+            <button type="button" className="sign-in-button" onClick={() => setShowSignIn(true)}>Sign in</button>
+          )}
           <button type="button" className="cart-button" onClick={() => setCartOpen(true)}>
             Cart
             {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
@@ -1009,7 +1304,14 @@ function App() {
 
               <div className="product-grid">
                 {visibleProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} onView={goToProduct} onAddToCart={addToCart} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onView={goToProduct}
+                    onAddToCart={addToCart}
+                    developerMode={developerMode}
+                    onEdit={setEditingProduct}
+                  />
                 ))}
                 {visibleProducts.length === 0 && (
                   <p>No cookies match "{searchQuery}" — try another search.</p>
